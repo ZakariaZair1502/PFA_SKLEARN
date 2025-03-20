@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>test</h1>
+    <form method="POST">
+        <label for="x">Entrez x : </label>
+        <input type="text" name="x" id="x" required placeholder="[[1, 2], [3, 4], [5, 6]]">
+        <label for="y">Entrez y : </label>
+        <input type="text" name="y" id="y" required placeholder="[1, 2, 3]">
+        <label for="x_test">Entrez une ligne a predire : </label>
+        <input type="text" name="x_test" id="x_test" required placeholder="[[1, 2], [3, 4], [5, 6]]">
+        <input type="submit" value="Valider">
+        <select id="algo" name="algo">
+            <option value="Linear Regression">Régression Linéaire</option>
+            <option value="SVR">SVR (Support Vector Regression)</option>
+            <option value="Decision Tree">Arbre de Décision</option>
+        </select>
+    </form>
+    {% if algo %}
+        <p>Algorithme choisi : {{ algo }}</p>
+    {% endif %}
+
+    {% if coef_ %}
+        <h2>Résultats :</h2>
+        <p><strong>Coefficients du modèle :</strong> {{ coef_ }}</p>
+        <p><strong>Prédictions sur X_test :</strong> {{ y_pred }}</p>
+    {% endif %}
+</body>
+</html>
