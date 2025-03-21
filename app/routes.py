@@ -59,7 +59,7 @@ def save():
     y = np.array(list(map(float, request.form.get('y').strip('[]').split(','))))
 
     model_trained = model_train(x, y, algo)
-    save_path = "app/uploads/"
+    save_path = "app/static/uploads/"
     print(bp.root_path)
     os.makedirs(save_path, exist_ok=True) 
     if model_trained:
