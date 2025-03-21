@@ -36,13 +36,12 @@ def model_train(file,model_name):
     return params
 
 def model_evaluat(params):
-    score = params['md'].score(params['x_train'],params['y_train'])
-    mse = mean_squared_error(params['y_test'],params['md'].predict(params['x_test']))
-    mae = mean_absolute_error(params['y_test'],params['md'].predict(params['x_test']))
-    metrics = {
-        'score': score,
-        'mse': mse,
-        'mae': mae
+    params['metrics'] = {
+        'score': params['md'].score(params['x_train'], params['y_train']),
+        'mse': mean_squared_error(params['y_test'], params['md'].predict(params['x_test'])),
+        'mae': mean_absolute_error(params['y_test'], params['md'].predict(params['x_test']))
     }
-    return metrics
+    return params
+
+
 
