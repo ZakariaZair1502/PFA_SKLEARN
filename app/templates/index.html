@@ -14,12 +14,12 @@
         <input type="text" name="y" id="y" required placeholder="[1, 2, 3]">
         <label for="x_test">Entrez une ligne a predire : </label>
         <input type="text" name="x_test" id="x_test" required placeholder="[[1, 2], [3, 4], [5, 6]]">
-        <input type="submit" value="Valider">
         <select id="algo" name="algo">
             <option value="Linear Regression">Régression Linéaire</option>
             <option value="SVR">SVR (Support Vector Regression)</option>
             <option value="Decision Tree">Arbre de Décision</option>
         </select>
+        <input type="submit" value="Valider">
     </form>
     {% if algo %}
         <p>Algorithme choisi : {{ algo }}</p>
@@ -29,6 +29,28 @@
         <h2>Résultats :</h2>
         <p><strong>Coefficients du modèle :</strong> {{ coef_ }}</p>
         <p><strong>Prédictions sur X_test :</strong> {{ y_pred }}</p>
+    {% endif %}
+    <form method="POST" action="/evaluate">
+        <input type="hidden" name="x" value="{{ request.form.get('x', '') }}">
+        <input type="hidden" name="y" value="{{ request.form.get('y', '') }}">
+        <input type="hidden" name="x_test" value="{{ request.form.get('x_test', '') }}">
+        <input type="hidden" name="algo" value="{{ request.form.get('algo', '') }}">
+        <button type="submit">Évaluer le modèle</button>
+    </form>
+    {% if score is not none %}
+        <h2>Évaluation du modèle :</h2>
+        <p><strong>Score :</strong> {{ score }}</p>
+        <p><strong>Erreur quadratique moyenne (MSE) :</strong> {{ mse }}</p>
+        <p><strong>Erreur absolue moyenne (MAE) :</strong> {{ mae }}</p>
+    {% endif %}
+    <form method="POST" action="/save">
+        <input type="hidden" name="x" value="{{ request.form.get('x', '') }}">
+        <input type="hidden" name="y" value="{{ request.form.get('y', '') }}">
+        <input type="hidden" name="algo" value="{{ request.form.get('algo', '') }}">
+        <button type="submit">Sauvegarder le modèle</button>
+    </form>
+    {% if save %}
+        <p> {{save}} </p>
     {% endif %}
 </body>
 </html>
