@@ -7,13 +7,9 @@
 </head>
 <body>
     <h1>test</h1>
-    <form method="POST">
-        <label for="x">Entrez x : </label>
-        <input type="text" name="x" id="x" required placeholder="[[1, 2], [3, 4], [5, 6]]">
-        <label for="y">Entrez y : </label>
-        <input type="text" name="y" id="y" required placeholder="[1, 2, 3]">
-        <label for="x_test">Entrez une ligne a predire : </label>
-        <input type="text" name="x_test" id="x_test" required placeholder="[[1, 2], [3, 4], [5, 6]]">
+    <form method="POST" enctype="multipart/form-data">
+        <label for="dataset">Sélectionnez un fichier CSV :</label>
+        <input type="file" name="dataset" id="dataset" required accept=".csv">
         <select id="algo" name="algo">
             <option value="Linear Regression">Régression Linéaire</option>
             <option value="SVR">SVR (Support Vector Regression)</option>
@@ -22,35 +18,34 @@
         <input type="submit" value="Valider">
     </form>
     {% if algo %}
-        <p>Algorithme choisi : {{ algo }}</p>
+        <p>Algorithme choisi : <strong>{{ algo }}</strong></p>
     {% endif %}
 
-    {% if coef_ %}
+    {% if params %}
         <h2>Résultats :</h2>
-        <p><strong>Coefficients du modèle :</strong> {{ coef_ }}</p>
-        <p><strong>Prédictions sur X_test :</strong> {{ y_pred }}</p>
+        <p><strong>x_test : </strong> {{ params['x_test'].tolist() }}</p>
+        <p><strong>y_test : {{ params['y_test'].tolist() }}</strong></p>
+        <p><strong>Prédictions sur X_test :</strong> {{ params['md'].predict(params['x_test']).tolist() }}</p>
     {% endif %}
-    <form method="POST" action="/evaluate">
-        <input type="hidden" name="x" value="{{ request.form.get('x', '') }}">
-        <input type="hidden" name="y" value="{{ request.form.get('y', '') }}">
-        <input type="hidden" name="x_test" value="{{ request.form.get('x_test', '') }}">
-        <input type="hidden" name="algo" value="{{ request.form.get('algo', '') }}">
+    <form method="POST" action="/evaluate" enctype="multipart/form-data">
+        <input type="hidden" name="filename" value="{{ filename }}">
+        <input type="hidden" name="algo" value="{{ algo }}">
         <button type="submit">Évaluer le modèle</button>
     </form>
-    {% if score is not none %}
+    {% if metrics %}
         <h2>Évaluation du modèle :</h2>
-        <p><strong>Score :</strong> {{ score }}</p>
-        <p><strong>Erreur quadratique moyenne (MSE) :</strong> {{ mse }}</p>
-        <p><strong>Erreur absolue moyenne (MAE) :</strong> {{ mae }}</p>
+        <p><strong>Score :</strong> {{ metrics['score'] }}</p>
+        <p><strong>Erreur quadratique moyenne (MSE) :</strong> {{ metrics['mse'] }}</p>
+        <p><strong>Erreur absolue moyenne (MAE) :</strong> {{ metrics['mae'] }}</p>
     {% endif %}
-    <form method="POST" action="/save">
-        <input type="hidden" name="x" value="{{ request.form.get('x', '') }}">
-        <input type="hidden" name="y" value="{{ request.form.get('y', '') }}">
-        <input type="hidden" name="algo" value="{{ request.form.get('algo', '') }}">
+    <form method="POST" action="/save" enctype="multipart/form-data">
+        <input type="hidden" name="filename" value="{{ filename }}">
+        <input type="hidden" name="algo" value="{{ algo }}">
         <button type="submit">Sauvegarder le modèle</button>
     </form>
+
     {% if save %}
-        <p> {{save}} </p>
+        <p><strong>{{ save }}</strong></p>
     {% endif %}
 </body>
 </html>

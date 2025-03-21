@@ -1,72 +1,76 @@
+from fileinput import filename
 from pyexpat import model
 from flask import Blueprint, render_template,request
 import numpy as np
+import pandas as pd
 import os
-import app
 from app.regression_models import model_train, model_evaluat
 import joblib as jb
+
 bp = Blueprint('main', __name__)
-global x,y,x_test,algo,md
+
+params_cache = {}
+filename = ""
+UPLOAD_FOLDER = "app/static/datasets"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 @bp.route('/', methods=['GET', 'POST'])
 def index():
+    global params_cache 
+    global filename
     algo = None
-    coef_ = None
-    y_pred = None
+    params = None
     if request.method == 'POST':
+        file = request.files.get('dataset') 
+        if file and file.filename.endswith('.csv'):
+            filename = file.filename
+            filepath = os.path.join(UPLOAD_FOLDER, filename)
+            file.save(filepath) 
         algo = request.form.get('algo')
-        x = request.form.get('x')
-        x = x.strip('[]')
-        x = [list(map(float, item.split(','))) for item in x.split('],[')]
-        x = np.array(x)
-        y = request.form.get('y')
-        y = y.strip('[]')
-        y = list(map(float, y.split(',')))
-        y = np.array(y)
-        x_test = request.form.get('x_test')
-        x_test = x_test.strip('[]')
-        x_test = [list(map(float, item.split(','))) for item in x_test.split('],[')]
-        x_test = np.array(x_test)
-        if algo:
+        cache_key = f"{file.filename}_{algo}"
+        if cache_key in params_cache:
+            params = params_cache[cache_key]
+        else:
             try:
-                md = model_train(x,y,algo)
-                y_pred = md.predict(x_test) 
-                coef_ = md.coef_
-                coef_ = str(coef_)
-                y_pred = str(y_pred)
-
+                params = model_train(filepath, algo)
+                params_cache[cache_key] = params  # Stocker en cache
             except ValueError as e:
-                coef_ = str(e)
-        coef_ = str(coef_)
-        y_pred = str(y_pred)
-    
-    return render_template('index.html', algo=algo, coef_=coef_, y_pred = y_pred)
+                return render_template('index.html', params=str(e))    
+    return render_template('index.html', algo=algo, params = params)
 
 @bp.route('/evaluate',methods=['GET', 'POST'])
 def evaluate():
     algo = request.form.get('algo')
-    x = np.array([list(map(float, item.split(','))) for item in request.form.get('x').strip('[]').split('],[')])
-    y = np.array(list(map(float, request.form.get('y').strip('[]').split(','))))
-    x_test = np.array([list(map(float, item.split(','))) for item in request.form.get('x_test').strip('[]').split('],[')])
+    if filename and algo:
+        cache_key = f"{filename}_{algo}"
+        if cache_key in params_cache:
+            params = params_cache[cache_key]
+        else:
+            filepath = os.path.join(UPLOAD_FOLDER,filename)
+            params = model_train(filepath, algo)
+            params_cache[cache_key] = params  # Stocker en cache
 
-    score, mse, mae = model_evaluat(x, y, x_test, algo)
-
-    return render_template('index.html', score=score, mse=mse, mae=mae)
+        metrics = model_evaluat(params)
+        return render_template('index.html',metrics=metrics, filename=filename, algo=algo)
+    return render_template('index.html')
     
 @bp.route('/save',methods=['GET', 'POST'])
 def save():
     algo = request.form.get('algo')
-    x = np.array([list(map(float, item.split(','))) for item in request.form.get('x').strip('[]').split('],[')])
-    y = np.array(list(map(float, request.form.get('y').strip('[]').split(','))))
 
-    model_trained = model_train(x, y, algo)
-    save_path = "app/static/uploads/"
-    print(bp.root_path)
-    os.makedirs(save_path, exist_ok=True) 
-    if model_trained:
+    if filename and algo:
+        cache_key = f"{filename}_{algo}"
+        if cache_key in params_cache:
+            params = params_cache[cache_key]
+        else:
+            filepath = os.path.join(UPLOAD_FOLDER,filename)
+            params = model_train(filepath, algo)
+            params_cache[cache_key] = params  # Stocker en cache
+
+        save_path = "app/static/uploads/"
+        os.makedirs(save_path, exist_ok=True)
         model_file = os.path.join(save_path, "model.pkl")
-        jb.dump(model_trained,model_file)
-        save = "Modele sauvegardé"
-    else : 
-        save = "Modele non sauvegardé"
-    return render_template('index.html',save = save)
+        jb.dump(params['md'], model_file)
+        return render_template('index.html', save="Modèle sauvegardé avec succès!", filename=filename, algo=algo)
+
+    return render_template('index.html', save="Erreur lors de la sauvegarde du modèle.")
 

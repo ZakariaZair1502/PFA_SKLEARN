@@ -1,10 +1,10 @@
-from numpy import mean
+import pandas as pd
 from sklearn.linear_model import LinearRegression, Ridge, Lasso, ElasticNet
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingRegressor,RandomForestRegressor
-
+from sklearn.model_selection import train_test_split
 ALGORITHMS = {
     'Linear Regression': LinearRegression,
     'SVR': SVR,
@@ -15,17 +15,34 @@ ALGORITHMS = {
     'Random Forest': RandomForestRegressor,
     'Gradient Boosting': GradientBoostingRegressor
 }
-def model_train(x,y,model_name):
+def model_train(file,model_name):
     if model_name not in ALGORITHMS:
         raise ValueError(f"Modèle {model_name} non valide")
     model_class = ALGORITHMS[model_name]
     md = model_class()
-    md.fit(x,y)
-    return md
-def model_evaluat(x,y,x_test,model_name):
-    md = model_train(x,y,model_name)
-    score = md.score(x,y)
-    mse = mean_squared_error(y,md.predict(x_test))
-    mae = mean_absolute_error(y,md.predict(x_test))
-    return score,mse,mae
+    data = pd.read_csv(file)
+    x = data.iloc[:,1:-1].values 
+    y = data.iloc[:, -1].values
+    x_train,x_test,y_train,y_test = train_test_split(x,y,test_size=0.2,random_state=0)
+    md.fit(x_train,y_train)
+    params = {
+        'x_train':x_train,
+        'y_train':y_train,
+        'x_test': x_test,
+        'y_test': y_test,
+        'md': md,
+        'algo': model_name
+    }
+    return params
+
+def model_evaluat(params):
+    score = params['md'].score(params['x_train'],params['y_train'])
+    mse = mean_squared_error(params['y_test'],params['md'].predict(params['x_test']))
+    mae = mean_absolute_error(params['y_test'],params['md'].predict(params['x_test']))
+    metrics = {
+        'score': score,
+        'mse': mse,
+        'mae': mae
+    }
+    return metrics
 
